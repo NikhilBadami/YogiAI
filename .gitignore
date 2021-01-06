@@ -3,3 +3,4 @@
 misc/create_dataset.py
 data/
 .DS_Store
+data copy/
