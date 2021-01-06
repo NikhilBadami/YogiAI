@@ -5,7 +5,6 @@ import cv2
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
-import tensorflow as tf
 
 class_labels = {
     "Warrior_I": 0,
@@ -50,10 +49,24 @@ def load_dataset(dataset_label):
                 labels.append(class_labels[class_name])
 
     pose.close()
-    return data, labels
+    return np.array(data), np.array(labels)
 
 def create_model():
-    
+    model = keras.Sequential()
+    model.add(
+        layers.Conv1D(
+            filters=16,
+            kernel_size=3,
+            activation=keras.activations.relu,
+            padding="same",
+            input_shape=(33, 2)
+        )
+    )
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.2))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(5, activation=keras.activations.softmax))
+    model.summary()
 
 
 if __name__ == "__main__":
@@ -62,3 +75,4 @@ if __name__ == "__main__":
     test_data, test_labels = load_dataset("Test")
 
     # Load CNN
+    create_model()
