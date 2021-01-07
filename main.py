@@ -4,6 +4,7 @@ import os
 import cv2
 from tensorflow import keras
 from tensorflow.keras import layers
+import tensorflow as tf
 import numpy as np
 
 class_labels = {
@@ -46,7 +47,10 @@ def load_dataset(dataset_label):
                     sample.append((lm.x, lm.y))
 
                 data.append(sample)
-                labels.append(class_labels[class_name])
+                # Create label sample
+                label_sample = np.zeros(5)
+                label_sample[class_labels[class_name]] = 1
+                labels.append(label_sample)
 
     pose.close()
     return np.array(data), np.array(labels)
@@ -66,7 +70,13 @@ def create_model():
     model.add(layers.Dropout(0.2))
     model.add(layers.Flatten())
     model.add(layers.Dense(5, activation=keras.activations.softmax))
-    model.summary()
+    # model.summary()
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.0001),
+        loss='categorical_crossentropy'
+    )
+    return model
 
 
 if __name__ == "__main__":
@@ -74,5 +84,11 @@ if __name__ == "__main__":
     train_data, train_labels = load_dataset("Train")
     test_data, test_labels = load_dataset("Test")
 
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_data, train_labels)).batch(32)
+    test_dataset = tf.data.Dataset.from_tensor_slices((test_data, test_labels)).batch(32)
+
     # Load CNN
-    create_model()
+    model = create_model()
+
+    # Train the model
+    model.fit(train_dataset, epochs=5)
