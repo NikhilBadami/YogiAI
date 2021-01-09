@@ -7,16 +7,19 @@ from tensorflow.keras import layers
 import tensorflow as tf
 import numpy as np
 import pickle
+import random
+from datetime import datetime
 
 class_labels = {
     "Warrior_I": 0,
     "Warrior_II": 1,
     "Tree": 2,
     "Triangle": 3,
-    "Standing Splits": 4
+    "Standing_Splits": 4
 }
 
-data_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data copy/"
+data_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data/"
+saved_model_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/saved_models/"
 
 
 def load_dataset(dataset_label, save_pickle=False, read_pickle=False):
@@ -78,6 +81,9 @@ def load_dataset(dataset_label, save_pickle=False, read_pickle=False):
             'labels': labels
         }
         filename = f"{data_path}pickled_data/{dataset_label}"
+        # Clear the contents of the file
+        open(filename, 'wb').close()
+
         with open(filename, 'wb') as f:
             pickle.dump(data_dict, f)
         print(f"saved {filename}")
@@ -85,6 +91,10 @@ def load_dataset(dataset_label, save_pickle=False, read_pickle=False):
     return np.array(data), np.array(labels)
 
 def create_model():
+    """
+    Create the Keras model
+    :return: model: Keras model
+    """
     model = keras.Sequential()
     model.add(
         layers.Conv1D(
@@ -113,17 +123,53 @@ if __name__ == "__main__":
     # Load training and test datasets
     train_data, train_labels = load_dataset("Train", save_pickle=True, read_pickle=True)
     test_data, test_labels = load_dataset("Test", save_pickle=True, read_pickle=True)
+    val_data, val_labels = load_dataset("Validation", save_pickle=True, read_pickle=True)
 
     train_dataset = tf.data.Dataset.from_tensor_slices((train_data, train_labels)).batch(32)
     test_dataset = tf.data.Dataset.from_tensor_slices((test_data, test_labels)).batch(32)
+    val_dataset = tf.data.Dataset.from_tensor_slices((val_data, val_labels)).batch(32)
 
     # Load CNN
     model = create_model()
 
     # Train the model
     model.fit(train_dataset, epochs=100)
+    # model.save(f"{saved_model_path}{str(datetime.today())}")
 
     # Evaluate model
-    loss, acc = model.evaluate(test_dataset)
+    loss, acc = model.evaluate(val_dataset)
     print(f"Loss: {loss}")
     print(f"Acc: {acc}")
+
+    # Predict with model
+    # Randomly select 1 image from each class
+    pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
+    mp_drawing = mp.solutions.drawing_utils
+    for class_name in class_labels.keys():
+        path = f"{data_path}{class_name}/Test"
+        filenames = os.listdir(path)
+        idx = random.randint(0, len(filenames) - 1)
+        filename = filenames[idx]
+        if not filename.endswith(".jpg"):
+            while not filename.endswith(".jpg"):
+                idx = random.randint(0, len(filenames))
+                filename = filenames[idx]
+        filepath = f"{path}/{filename}"
+        image = cv2.imread(filepath)
+        results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+        # Draw skeleton on image
+        annotated_image = image.copy()
+        mp_drawing.draw_landmarks(annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        cv2.imshow('', annotated_image)
+        cv2.waitKey()
+
+        # Extract x,y coordinates of key poitns
+        sample = []
+        for lm in results.pose_landmarks.landmark:
+            sample.append((lm.x, lm.y))
+
+        # get prediction for skeleton
+        print(class_name)
+        prediction = model(np.array(sample)[np.newaxis, :, :])
+        print(prediction)
