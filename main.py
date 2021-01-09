@@ -6,6 +6,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import tensorflow as tf
 import numpy as np
+import pickle
 
 class_labels = {
     "Warrior_I": 0,
@@ -15,14 +16,30 @@ class_labels = {
     "Standing Splits": 4
 }
 
-data_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data/"
+data_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data copy/"
 
 
-def load_dataset(dataset_label):
+def load_dataset(dataset_label, save_pickle=False, read_pickle=False):
     """
     :param dataset_label: Train or Test
+    :param save_pickle: whether or not to save the processed data as a pickled file
+    :param read_pickle: whether func should read data from file or process raw image data
     :return: tuple of lists containing data samples and corresponding labels
     """
+
+    # Check to see if dataset should be loaded from file
+    if read_pickle:
+        filename = f"{data_path}pickled_data/{dataset_label}"
+        try:
+            print(f"Loading {dataset_label} data from pickle")
+            data_dict = None
+            with open(filename, 'rb') as f:
+                data_dict = pickle.load(f)
+            data = data_dict['data']
+            labels = data_dict['labels']
+            return np.array(data), np.array(labels)
+        except:
+            print(f"Err: {filename} does not exist. Loading data from images")
 
     # Load raw imags and extract pose skeleton. Will result in 32 keypoints
     pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
@@ -53,6 +70,18 @@ def load_dataset(dataset_label):
                 labels.append(label_sample)
 
     pose.close()
+
+    # Check to see if this data should be pickled
+    if save_pickle:
+        data_dict = {
+            'data': data,
+            'labels': labels
+        }
+        filename = f"{data_path}pickled_data/{dataset_label}"
+        with open(filename, 'wb') as f:
+            pickle.dump(data_dict, f)
+        print(f"saved {filename}")
+
     return np.array(data), np.array(labels)
 
 def create_model():
@@ -74,15 +103,16 @@ def create_model():
 
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.0001),
-        loss='categorical_crossentropy'
+        loss='categorical_crossentropy',
+        metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy")]
     )
     return model
 
 
 if __name__ == "__main__":
     # Load training and test datasets
-    train_data, train_labels = load_dataset("Train")
-    test_data, test_labels = load_dataset("Test")
+    train_data, train_labels = load_dataset("Train", save_pickle=True, read_pickle=True)
+    test_data, test_labels = load_dataset("Test", save_pickle=True, read_pickle=True)
 
     train_dataset = tf.data.Dataset.from_tensor_slices((train_data, train_labels)).batch(32)
     test_dataset = tf.data.Dataset.from_tensor_slices((test_data, test_labels)).batch(32)
@@ -91,4 +121,9 @@ if __name__ == "__main__":
     model = create_model()
 
     # Train the model
-    model.fit(train_dataset, epochs=5)
+    model.fit(train_dataset, epochs=100)
+
+    # Evaluate model
+    loss, acc = model.evaluate(test_dataset)
+    print(f"Loss: {loss}")
+    print(f"Acc: {acc}")
