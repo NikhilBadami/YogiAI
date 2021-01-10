@@ -10,7 +10,7 @@ class_labels = {
     "Standing_Splits": 4
 }
 
-data_path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data/"
+data_path = "path/to/data"
 
 config = {
     "create_model": True,
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if config["create_model"]:
         model = create_model()
     if config["load_model"]:
-        model = keras.models.load_model("/Users/nikhilbadami/Pose Estimation/YogiAI/saved_models/")
+        model = keras.models.load_model("path/to/saved/models")
     if config["train_model"]:
         train_model(model, config, train_dataset, val_dataset)
     if config["eval_model"]:

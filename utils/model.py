@@ -147,7 +147,7 @@ def predict_with_video(model, class_labels):
 
 def train_model(model, config, train_dataset, val_dataset):
     history = model.fit(train_dataset, epochs=100, validation_data=val_dataset)
-    model.save("/Users/nikhilbadami/Pose Estimation/YogiAI/saved_models/")
+    model.save("path/to/saved/models")
     if config["display_stats"]:
         # summarize history for acc
         plt.plot(history.history['accuracy'])

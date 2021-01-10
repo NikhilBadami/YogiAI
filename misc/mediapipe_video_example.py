@@ -5,7 +5,7 @@ mp_pose = mp.solutions.pose
 if __name__ == "__main__":
     # For static images:
     pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
-    path = "/Users/nikhilbadami/Pose Estimation/YogiAI/data/Triangle/Train/Triangle_571.jpg"
+    path = "path/to/test/image"
     image = cv2.imread(path)
     print(image)
     image_hight, image_width, _ = image.shape
