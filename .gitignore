@@ -1,0 +1,6 @@
+*.pyc
+.idea/
+data/
+.DS_Store
+data copy/
+saved_models/
