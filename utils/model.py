@@ -33,17 +33,6 @@ def create_model():
             kernel_size=3,
             activation=keras.activations.relu,
             padding="same",
-            input_shape=(33, 2)
-        )
-    )
-    model.add(layers.BatchNormalization())
-    model.add(layers.Dropout(0.5))
-    model.add(
-        layers.Conv1D(
-            filters=16,
-            kernel_size=3,
-            activation=keras.activations.relu,
-            padding="same",
         )
     )
     model.add(layers.BatchNormalization())
@@ -53,7 +42,7 @@ def create_model():
     # model.summary()
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.00009),
+        optimizer=keras.optimizers.Adam(learning_rate=0.0001),
         loss='categorical_crossentropy',
         metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy")]
     )
@@ -65,8 +54,9 @@ def get_label_from_prediction(prediction, class_labels):
     :param prediction: 1-hot encoded output from model
     :return: label: name of predicted pose
     """
-    predicted_label = np.argmax(prediction.numpy())
-    label = ''
+    prediction_np = prediction.numpy()
+    predicted_label = np.argmax(prediction_np)
+    label = 'No pose detected'
     for class_name in class_labels.keys():
         if predicted_label == class_labels[class_name]:
             label = class_name
@@ -156,7 +146,8 @@ def predict_with_video(model, class_labels):
     cv2.destroyAllWindows()
 
 def train_model(model, config, train_dataset, val_dataset):
-    history = model.fit(train_dataset, epochs=150, validation_data=val_dataset)
+    history = model.fit(train_dataset, epochs=100, validation_data=val_dataset)
+    model.save("/Users/nikhilbadami/Pose Estimation/YogiAI/saved_models/")
     if config["display_stats"]:
         # summarize history for acc
         plt.plot(history.history['accuracy'])
