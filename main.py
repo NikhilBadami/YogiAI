@@ -29,9 +29,9 @@ if __name__ == "__main__":
     if config["create_model"]:
         model = create_model()
     if config["train_model"]:
-        model.fit(train_dataset, epochs=100)
+        model.fit(train_dataset, epochs=100, validation_data=val_dataset)
     if config["eval_model"]:
-        loss, acc = model.evaluate(val_dataset)
+        loss, acc = model.evaluate(test_dataset)
         print(f"loss: {loss}\nacc: {acc}")
     if config["predict_static"]:
         predict_with_static_image(model, class_labels, data_path)

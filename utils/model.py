@@ -24,6 +24,16 @@ def create_model():
         )
     )
     model.add(layers.BatchNormalization())
+    model.add(layers.MaxPooling1D())
+    model.add(
+        layers.Conv1D(
+            filters=16,
+            kernel_size=3,
+            activation=keras.activations.relu,
+            padding="same",
+        )
+    )
+    model.add(layers.BatchNormalization())
     model.add(layers.Dropout(0.2))
     model.add(layers.Flatten())
     model.add(layers.Dense(5, activation=keras.activations.softmax))
