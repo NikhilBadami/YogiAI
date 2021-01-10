@@ -1,5 +1,5 @@
 from utils.dataloader import load_data
-from utils.model import create_model, predict_with_static_image, predict_with_video
+from utils.model import create_model, predict_with_static_image, predict_with_video, train_model
 
 class_labels = {
     "Warrior_I": 0,
@@ -20,7 +20,8 @@ config = {
     "predict_static": False,
     "predict_video": False,
     "read_pickle": True,
-    "save_pickle": True
+    "save_pickle": True,
+    "display_stats": True
 }
 
 if __name__ == "__main__":
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     if config["create_model"]:
         model = create_model()
     if config["train_model"]:
-        model.fit(train_dataset, epochs=100, validation_data=val_dataset)
+        train_model(model, config, train_dataset, val_dataset)
     if config["eval_model"]:
         loss, acc = model.evaluate(test_dataset)
         print(f"loss: {loss}\nacc: {acc}")

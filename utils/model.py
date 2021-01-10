@@ -7,6 +7,7 @@ import os
 import random
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 def create_model():
     """
@@ -24,7 +25,19 @@ def create_model():
         )
     )
     model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.2))
     model.add(layers.MaxPooling1D())
+    model.add(
+        layers.Conv1D(
+            filters=16,
+            kernel_size=3,
+            activation=keras.activations.relu,
+            padding="same",
+            input_shape=(33, 2)
+        )
+    )
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.5))
     model.add(
         layers.Conv1D(
             filters=16,
@@ -40,7 +53,7 @@ def create_model():
     # model.summary()
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.0001),
+        optimizer=keras.optimizers.Adam(learning_rate=0.00009),
         loss='categorical_crossentropy',
         metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy")]
     )
@@ -141,3 +154,23 @@ def predict_with_video(model, class_labels):
             break
     cap.release()
     cv2.destroyAllWindows()
+
+def train_model(model, config, train_dataset, val_dataset):
+    history = model.fit(train_dataset, epochs=150, validation_data=val_dataset)
+    if config["display_stats"]:
+        # summarize history for acc
+        plt.plot(history.history['accuracy'])
+        plt.plot(history.history['val_accuracy'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
+        # summarize history for loss
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
